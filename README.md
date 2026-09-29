@@ -1,173 +1,75 @@
-<div align="center">
+# SkyPath — tool-calling travel agent on live Amadeus data
 
-# ✈️ SkyPath: AI-Powered Travel Assistant
+A conversational trip planner. An LLM agent calls **15 Amadeus API tools** to search real flights, hotels and activities, then assembles a trip plan the user can refine step by step. 🏆 **4th place at the UiPath Future Forward Hackathon 2025** **[TODO: out of how many teams?]**
 
-### 🏆 Proudly awarded **4th place** at the UiPath Future Forward Hackathon 2025!
+**[TODO: add a screenshot or GIF — e.g. `![demo](docs/demo.gif)`]**
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-5.0-092E20?style=for-the-badge&logo=django&logoColor=white)
-![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?style=for-the-badge&logo=openai&logoColor=white)
-![Amadeus](https://img.shields.io/badge/Amadeus-API-1B69BC?style=for-the-badge&logo=amadeus&logoColor=white)
+## Problem
 
-*Revolutionizing travel planning with AI-powered multi-agent orchestration*
+Travel aggregators return long, noisy lists of options. A general-purpose chatbot, on the other hand, invents prices and schedules. SkyPath keeps the conversational interface but **grounds every flight, hotel and price in live Amadeus data**.
 
-</div>
+## How it works
 
----
+- **Tool-calling loop.** The backend is Django REST and runs **Claude Sonnet 4 (via OpenRouter)**. Each user message can trigger up to 10 rounds of tool calls before the agent answers.
+- **15 Amadeus tools:**
+  - flights: offer search and pricing, cheapest-date search, flight inspiration;
+  - hotels: hotel list, search, offers and ratings;
+  - tours & activities;
+  - airport/city search, direct destinations, airline destinations;
+  - trip-purpose prediction.
+- **Stateful sessions.** Conversation history and workflow state (selected flight, hotel, dates) are persisted per session, so the plan can be refined over several turns. Endpoints: `/chat`, `/update_state`, `/summary`, `/reset`.
+- **Photo → destination.** `/locate_city` uses a vision model to identify the city in a user's photo and start planning a trip there.
+- **Voice.** The frontend supports speech input and spoken replies (OpenAI speech-to-text and text-to-speech).
 
-## 📖 Overview
+**[TODO: if the hackathon version also included agents built in UiPath (e.g. separate flight / hotel / itinerary agents), describe that part here — this repository contains the single tool-calling agent described above.]**
 
-**SkyPath** is an AI-powered travel assistant designed to streamline the entire trip-planning experience. Instead of dealing with chaotic aggregators and irrelevant options, SkyPath uses specialized AI agents connected directly to real Amadeus data to deliver accurate and personalized travel plans.
-
----
-
-## ✨ Key Features
-
-### 🛫 Flight Optimization Engine
-- Refines schedules, budgets, layovers, luggage rules, and travel constraints
-- **No hallucinations**: uses clean, real Amadeus data
-
-### 🏨 Hotel Recommendations
-- Suggests accommodations based on location, price, preferences, and style
-- Powered by Amadeus hotel datasets
-
-### 📅 Custom Itinerary Generator
-- Builds tailored day-by-day itineraries using user interests
-- Time optimization, context awareness, and local activity data
-
-### 🤖 Multi-Agent AI System
-- Smart agents collaborate to enhance accuracy, filtering, and relevance
-- Seamless orchestration throughout the planning flow
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    🎯 ORCHESTRATOR AGENT                    │
-│              (Receives & Coordinates Requests)              │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-┌───────────┐  ┌───────────┐  ┌───────────┐
-│  ✈️ Flight │  │  🏨 Hotel  │  │ 📋 Itinerary│
-│   Agent   │  │   Agent   │  │   Agent   │
-└─────┬─────┘  └─────┬─────┘  └─────┬─────┘
-      │              │              │
-      └──────────────┼──────────────┘
-                     ▼
-         ┌─────────────────────┐
-         │   🔗 AMADEUS API    │
-         │  (Real-Time Data)   │
-         └─────────────────────┘
+```mermaid
+flowchart LR
+  U[User: text, voice or photo] --> FE[React + TypeScript]
+  FE -->|REST| BE[Django backend]
+  BE --> LLM[Claude Sonnet 4<br/>via OpenRouter]
+  LLM -->|tool calls| T[15 Amadeus tools]
+  T -->|live flights, hotels, activities| LLM
+  BE --> DB[(Session state)]
+  LLM --> FE
 ```
 
----
+## Tech stack
 
-## 🛠️ Tech Stack
+**Backend:** Python, Django 5, Django REST Framework, Amadeus Self-Service API, OpenRouter
+**Frontend:** React, TypeScript, Vite, Tailwind CSS
 
-| Layer | Technology | Description |
-|-------|------------|-------------|
-| **Backend** | Django (Python) | Multi-agent orchestration, Amadeus API integration |
-| **Frontend** | React + TypeScript | Modern UI with Vite & Tailwind CSS |
-| **AI** | OpenAI + Custom Agents | LLM coordination, data validation, context sharing |
-| **Data** | Amadeus API | Real-time flight, hotel, and activity data |
+## How to run
 
----
+Create `backend/.env` (see `backend/.env.example`), then:
 
-## 📁 Project Structure
-
-```
-📦 UiPath-Hackathon-2025
-├── 📂 backend/
-│   ├── 📂 apps/           # Django applications
-│   ├── 📂 config/         # Django configuration
-│   ├── 📂 services/       # Business logic & agents
-│   └── 📄 manage.py       # Django management script
-├── 📂 frontend/
-│   ├── 📂 src/            # React source code
-│   ├── 📄 package.json    # Node dependencies
-│   └── 📄 vite.config.ts  # Vite configuration
-├── 📄 requirements.txt    # Python dependencies
-└── 📄 README.md           # This file
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Amadeus API credentials
-- OpenAI API key
-
-### Backend Setup
 ```bash
-# Navigate to backend
+pip install -r requirements.txt
 cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r ../requirements.txt
-
-# Configure environment variables
-cp .env.example .env  # Add your API keys
-
-# Run migrations
 python manage.py migrate
-
-# Start server
-python manage.py runserver
+python manage.py runserver        # http://localhost:8000
 ```
 
-### Frontend Setup
 ```bash
-# Navigate to frontend
 cd frontend
-
-# Install dependencies
+cp .env.example .env              # set VITE_API_URL
 npm install
-
-# Start development server
 npm run dev
 ```
 
----
+The Amadeus **test** environment is free: create an app at developers.amadeus.com to get a client ID and secret.
 
-## 🔮 Future Enhancements
+## What I'd improve
 
-- 🗺️ Multi-city route generation
-- 🚌 Local transport recommendations
-- 📍 Google Maps integration
-- ⚙️ Full UiPath automation pipelines
-- 🌐 Multi-language support
+- **Evaluation.** Build a set of travel requests with the expected tool calls. Measure tool-selection accuracy, and check that no price or schedule appears in a reply unless it came from a tool result.
+- **Tests.** Add unit tests for the tool layer with mocked Amadeus responses.
+- **API key safety.** Move the speech-to-text and text-to-speech calls behind the backend. Right now the OpenAI key is read by the frontend and ends up in the browser bundle.
+- **Streaming.** The frontend has a WebSocket client, but the backend only serves REST. Stream partial answers with Django Channels or SSE.
+- **Repo hygiene.** Remove the committed `frontend/node_modules`.
 
----
+## My contribution
 
-## 👥 Team Skepya
+Team project. I worked on the LLM layer of the backend:
 
-<div align="center">
-
-*Hackathon project created with passion and innovation* 💡
-
-**Made with ❤️ at UiPath Future Forward Hackathon 2025**
-
-</div>
-
----
-
-<div align="center">
-
-⭐ **Star this repo if you found it helpful!** ⭐
-
-</div>
-
+- **Tool calling**, together with Rareș Roșcan: defined the 15 Amadeus tools as JSON schemas for the model and built the tool-calling loop. The agent can chain up to 10 rounds of tool calls per message, with each tool result fed back into the conversation before the final answer.
+- **LLM integration in the backend:** connected Claude Sonnet 4 (via OpenRouter) to the Django API, through the chat service that sends the conversation history to the model, runs the tools it requests and returns the final answer to the frontend.
