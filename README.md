@@ -2,8 +2,6 @@
 
 A conversational trip planner. An LLM agent calls **15 Amadeus API tools** to search real flights, hotels and activities, then assembles a trip plan the user can refine step by step. 🏆 **4th place at the UiPath Future Forward Hackathon 2025** **[TODO: out of how many teams?]**
 
-**[TODO: add a screenshot or GIF — e.g. `![demo](docs/demo.gif)`]**
-
 ## Problem
 
 Travel aggregators return long, noisy lists of options. A general-purpose chatbot, on the other hand, invents prices and schedules. SkyPath keeps the conversational interface but **grounds every flight, hotel and price in live Amadeus data**.
@@ -20,8 +18,6 @@ Travel aggregators return long, noisy lists of options. A general-purpose chatbo
 - **Stateful sessions.** Conversation history and workflow state (selected flight, hotel, dates) are persisted per session, so the plan can be refined over several turns. Endpoints: `/chat`, `/update_state`, `/summary`, `/reset`.
 - **Photo → destination.** `/locate_city` uses a vision model to identify the city in a user's photo and start planning a trip there.
 - **Voice.** The frontend supports speech input and spoken replies (OpenAI speech-to-text and text-to-speech).
-
-**[TODO: if the hackathon version also included agents built in UiPath (e.g. separate flight / hotel / itinerary agents), describe that part here — this repository contains the single tool-calling agent described above.]**
 
 ```mermaid
 flowchart LR
